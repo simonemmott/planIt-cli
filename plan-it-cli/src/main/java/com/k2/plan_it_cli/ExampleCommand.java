@@ -9,4 +9,5 @@ public class ExampleCommand {
     public String example() {
         return "Hello";
     }
+
 }
