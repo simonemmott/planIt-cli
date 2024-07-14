@@ -1,1 +1,2 @@
-# planIt-cli
+# Plan-It Command Line Interface
+
