@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -75,6 +76,32 @@ public class FsDaoTest {
     }
 
     @Test
+    public void shouldCallbackPostIndex() {
+        // Given
+        Paths paths = mockPaths(dir, "AAA.json", "BBB.xml");
+        Runnable postIndexCallback = mock(Runnable.class);
+
+        try(MockedStatic<Files> filesMockedStatic = mockStatic(Files.class)) {
+            filesMockedStatic.when(() -> {
+                Files.list(paths.path);
+            }).thenReturn(paths.entries.stream());
+
+            // When
+            sut = new FsDao<>(
+                    APojo.class,
+                    APojo::getKey,
+                    (entity, key) -> {entity.setKey(key); return entity;},
+                    keyGenerator,
+                    dir,
+                    mapper,
+                    postIndexCallback);
+
+            // Then
+            verify(postIndexCallback).run();
+        }
+    }
+
+    @Test
     public void shouldThrowNotExistsExceptionWhenKeyDoesNotExistOnGet() {
         // Given
         Paths paths = mockPaths(dir, "AAA.json", "BBB.xml");
@@ -123,6 +150,96 @@ public class FsDaoTest {
     }
 
     @Test
+    public void shouldReturnEntityOnGetWithPredicate() throws IOException, NotExistsException, NotUniqueException {
+        // Given
+        Paths paths = mockPaths(dir, "AAA.json", "BBB.json");
+        APojo aaa = mock(APojo.class);
+        doReturn(aaa).when(mapper).readValue(paths.files.get(0), APojo.class);
+        APojo bbb = mock(APojo.class);
+        doReturn(bbb).when(mapper).readValue(paths.files.get(1), APojo.class);
+        Predicate<APojo> predicate = mock(Predicate.class);
+        doReturn(true).when(predicate).test(aaa);
+        doReturn(false).when(predicate).test(bbb);
+
+        try(MockedStatic<Files> filesMockedStatic = mockStatic(Files.class)) {
+            filesMockedStatic.when(() -> {
+                Files.list(paths.path);
+            }).thenReturn(paths.entries.stream());
+
+            sut = new FsDao<>(
+                    APojo.class,
+                    APojo::getKey,
+                    (obj, key) -> {obj.setKey(key); return obj;},
+                    keyGenerator,
+                    dir,
+                    mapper);
+
+            // When
+            assertEquals(aaa, sut.get(predicate));
+        }
+    }
+
+    @Test
+    public void shouldThrowNotExistsExceptionOnGetWithPredicate() throws IOException, NotExistsException, NotUniqueException {
+        // Given
+        Paths paths = mockPaths(dir, "AAA.json", "BBB.json");
+        APojo aaa = mock(APojo.class);
+        doReturn(aaa).when(mapper).readValue(paths.files.get(0), APojo.class);
+        APojo bbb = mock(APojo.class);
+        doReturn(bbb).when(mapper).readValue(paths.files.get(1), APojo.class);
+        Predicate<APojo> predicate = mock(Predicate.class);
+        doReturn(false).when(predicate).test(aaa);
+        doReturn(false).when(predicate).test(bbb);
+
+        try(MockedStatic<Files> filesMockedStatic = mockStatic(Files.class)) {
+            filesMockedStatic.when(() -> {
+                Files.list(paths.path);
+            }).thenReturn(paths.entries.stream());
+
+            sut = new FsDao<>(
+                    APojo.class,
+                    APojo::getKey,
+                    (obj, key) -> {obj.setKey(key); return obj;},
+                    keyGenerator,
+                    dir,
+                    mapper);
+
+            // When
+            assertThrows(NotExistsException.class, () -> sut.get(predicate));
+        }
+    }
+
+    @Test
+    public void shouldThrowNotUniqueExceptionOnGetWithPredicate() throws IOException, NotExistsException, NotUniqueException {
+        // Given
+        Paths paths = mockPaths(dir, "AAA.json", "BBB.json");
+        APojo aaa = mock(APojo.class);
+        doReturn(aaa).when(mapper).readValue(paths.files.get(0), APojo.class);
+        APojo bbb = mock(APojo.class);
+        doReturn(bbb).when(mapper).readValue(paths.files.get(1), APojo.class);
+        Predicate<APojo> predicate = mock(Predicate.class);
+        doReturn(true).when(predicate).test(aaa);
+        doReturn(true).when(predicate).test(bbb);
+
+        try(MockedStatic<Files> filesMockedStatic = mockStatic(Files.class)) {
+            filesMockedStatic.when(() -> {
+                Files.list(paths.path);
+            }).thenReturn(paths.entries.stream());
+
+            sut = new FsDao<>(
+                    APojo.class,
+                    APojo::getKey,
+                    (obj, key) -> {obj.setKey(key); return obj;},
+                    keyGenerator,
+                    dir,
+                    mapper);
+
+            // When
+            assertThrows(NotUniqueException.class, () -> sut.get(predicate));
+        }
+    }
+
+    @Test
     public void shouldStreamAllEntities() throws IOException, NotExistsException {
         // Given
         Paths paths = mockPaths(dir, "AAA.json", "BBB.json");
@@ -150,6 +267,40 @@ public class FsDaoTest {
             // Then
             assertEquals(aaa, entities.get(0));
             assertEquals(bbb, entities.get(1));
+        }
+    }
+
+    @Test
+    public void shouldStreamAllEntitiesForAPredicate() throws IOException, NotExistsException {
+        // Given
+        Paths paths = mockPaths(dir, "AAA.json", "BBB.json");
+        APojo aaa = mock(APojo.class);
+        doReturn(aaa).when(mapper).readValue(paths.files.get(0), APojo.class);
+        APojo bbb = mock(APojo.class);
+        doReturn(bbb).when(mapper).readValue(paths.files.get(1), APojo.class);
+        Predicate<APojo> predicate = mock(Predicate.class);
+        doReturn(true).when(predicate).test(aaa);
+        doReturn(false).when(predicate).test(bbb);
+
+        try(MockedStatic<Files> filesMockedStatic = mockStatic(Files.class)) {
+            filesMockedStatic.when(() -> {
+                Files.list(paths.path);
+            }).thenReturn(paths.entries.stream());
+
+            sut = new FsDao<>(
+                    APojo.class,
+                    APojo::getKey,
+                    (obj, key) -> {obj.setKey(key); return obj;},
+                    keyGenerator,
+                    dir,
+                    mapper);
+
+            // When
+            List<APojo> entities = sut.stream(predicate).collect(Collectors.toList());
+
+            // Then
+            assertEquals(aaa, entities.get(0));
+            assertEquals(1, entities.size());
         }
     }
 

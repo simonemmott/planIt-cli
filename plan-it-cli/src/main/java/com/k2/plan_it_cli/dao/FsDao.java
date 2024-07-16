@@ -8,19 +8,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class FsDao<T> implements GenericDao<T>{
-    private final Class<T> type;
-    private final KeyGetter<T> keyGetter;
-    private final KeySetter<T> keySetter;
-    private final Supplier<String> keyGenerator;
+    protected final Class<T> type;
+    protected final KeyGetter<T> keyGetter;
+    protected final KeySetter<T> keySetter;
+    protected final Supplier<String> keyGenerator;
     private final File dir;
     private final ObjectMapper mapper;
     private Map<String, File> index = new HashMap<>();
+    private final Runnable postIndexCallback;
 
     public FsDao(
             Class<T> type,
@@ -29,12 +32,24 @@ public class FsDao<T> implements GenericDao<T>{
             Supplier<String> keyGenerator,
             File dir,
             ObjectMapper mapper) {
+        this(type, keyGetter, keySetter, keyGenerator, dir, mapper, null);
+    }
+
+    public FsDao(
+            Class<T> type,
+            KeyGetter<T> keyGetter,
+            KeySetter<T> keySetter,
+            Supplier<String> keyGenerator,
+            File dir,
+            ObjectMapper mapper,
+            Runnable postIndexCallback) {
         this.type = type;
         this.keyGetter = keyGetter;
         this.keySetter = keySetter;
         this.keyGenerator = keyGenerator;
         this.dir = dir;
         this.mapper = mapper;
+        this.postIndexCallback = postIndexCallback;
         index();
     }
 
@@ -57,6 +72,18 @@ public class FsDao<T> implements GenericDao<T>{
     }
 
     @Override
+    public T get(Predicate<? super T> predicate) throws NotExistsException, NotUniqueException {
+        List<T> list = stream(predicate).toList();
+        if (list == null || list.isEmpty()) {
+            throw new NotExistsException(predicate, type.getSimpleName());
+        }
+        if (list.size() > 1) {
+            throw new NotUniqueException(predicate, type.getSimpleName());
+        }
+        return list.get(0);
+    }
+
+    @Override
     public Stream<T> stream() {
         return index.values().stream()
                 .map(file -> {
@@ -66,6 +93,19 @@ public class FsDao<T> implements GenericDao<T>{
                         throw new FsDaoFileReadError(file, type, e);
                     }
                 });
+    }
+
+    @Override
+    public Stream<T> stream(Predicate<? super T> prediacte) {
+        return index.values().stream()
+                .map(file -> {
+                    try {
+                        return mapper.readValue(file, type);
+                    } catch (IOException e) {
+                        throw new FsDaoFileReadError(file, type, e);
+                    }
+                })
+                .filter(prediacte);
     }
 
     @Override
@@ -125,7 +165,7 @@ public class FsDao<T> implements GenericDao<T>{
         return new File(dir, name);
     }
 
-    private void index() {
+    protected void index() {
         Map<String, File> index = new HashMap<>();
         try (Stream<Path> entries = Files.list(dir.toPath())) {
             entries.forEach(path -> {
@@ -138,6 +178,9 @@ public class FsDao<T> implements GenericDao<T>{
             this.index = index;
         } catch (IOException err) {
             throw new GenericDaoError(MessageFormat.format("Unable to load {0}s from {1}", type, dir), err);
+        }
+        if (postIndexCallback != null) {
+            postIndexCallback.run();
         }
     }
 }
