@@ -4,6 +4,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public interface GenericDao<T> {
+    String ofType();
+    KeyGetter<T> keyGetter();
     boolean exists(String key);
     T get(String key) throws NotExistsException;
     T get(Predicate<? super T> predicate) throws NotExistsException, NotUniqueException;
@@ -12,4 +14,5 @@ public interface GenericDao<T> {
     T insert(T entity) throws AlreadyExistsException;
     T update(T entity) throws NotExistsException, DataIntegrityViolationException;
     T delete(String key) throws NotExistsException;
+    void registerPostIndexCallback(Runnable postIndexCallback);
 }

@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -23,17 +21,7 @@ public class FsDao<T> implements GenericDao<T>{
     private final File dir;
     private final ObjectMapper mapper;
     private Map<String, File> index = new HashMap<>();
-    private final Runnable postIndexCallback;
-
-    public FsDao(
-            Class<T> type,
-            KeyGetter<T> keyGetter,
-            KeySetter<T> keySetter,
-            Supplier<String> keyGenerator,
-            File dir,
-            ObjectMapper mapper) {
-        this(type, keyGetter, keySetter, keyGenerator, dir, mapper, null);
-    }
+    private final List<Runnable> postIndexCallbacks = new ArrayList<>();
 
     public FsDao(
             Class<T> type,
@@ -42,15 +30,25 @@ public class FsDao<T> implements GenericDao<T>{
             Supplier<String> keyGenerator,
             File dir,
             ObjectMapper mapper,
-            Runnable postIndexCallback) {
+            Runnable ... postIndexCallbacks) {
         this.type = type;
         this.keyGetter = keyGetter;
         this.keySetter = keySetter;
         this.keyGenerator = keyGenerator;
         this.dir = dir;
         this.mapper = mapper;
-        this.postIndexCallback = postIndexCallback;
+        Collections.addAll(this.postIndexCallbacks, postIndexCallbacks);
         index();
+    }
+
+    @Override
+    public String ofType() {
+        return type.getSimpleName();
+    }
+
+    @Override
+    public KeyGetter<T> keyGetter() {
+        return keyGetter;
     }
 
     @Override
@@ -62,7 +60,7 @@ public class FsDao<T> implements GenericDao<T>{
     public T get(String key) throws NotExistsException {
         File file = index.get(key);
         if (file == null) {
-            throw new NotExistsException(key, type.getName());
+            throw new NotExistsException(key, ofType());
         }
         try {
             return mapper.readValue(file, type);
@@ -75,10 +73,10 @@ public class FsDao<T> implements GenericDao<T>{
     public T get(Predicate<? super T> predicate) throws NotExistsException, NotUniqueException {
         List<T> list = stream(predicate).toList();
         if (list == null || list.isEmpty()) {
-            throw new NotExistsException(predicate, type.getSimpleName());
+            throw new NotExistsException(predicate, ofType());
         }
         if (list.size() > 1) {
-            throw new NotUniqueException(predicate, type.getSimpleName());
+            throw new NotUniqueException(predicate, ofType());
         }
         return list.get(0);
     }
@@ -113,7 +111,7 @@ public class FsDao<T> implements GenericDao<T>{
         String key = keyGetter.get(entity);
          if (key != null) {
             if (exists(key)) {
-                throw new AlreadyExistsException(key, type.getSimpleName());
+                throw new AlreadyExistsException(key, ofType());
             }
         } else {
             key = keyGenerator.get();
@@ -134,7 +132,7 @@ public class FsDao<T> implements GenericDao<T>{
         String key = keyGetter.get(entity);
         if (key != null) {
             if (!exists(key)) {
-                throw new NotExistsException(key, type.getSimpleName());
+                throw new NotExistsException(key, ofType());
             }
         } else {
             throw new DataIntegrityViolationException(key, type, "No primary key defined during update");
@@ -161,6 +159,11 @@ public class FsDao<T> implements GenericDao<T>{
         return deleted;
     }
 
+    @Override
+    public void registerPostIndexCallback(Runnable postIndexCallback) {
+        postIndexCallbacks.add(postIndexCallback);
+    }
+
     File newFile(File dir, String name) {
         return new File(dir, name);
     }
@@ -179,8 +182,7 @@ public class FsDao<T> implements GenericDao<T>{
         } catch (IOException err) {
             throw new GenericDaoError(MessageFormat.format("Unable to load {0}s from {1}", type, dir), err);
         }
-        if (postIndexCallback != null) {
-            postIndexCallback.run();
-        }
+        postIndexCallbacks.stream()
+                .forEach(postIndexCallback -> postIndexCallback.run());
     }
 }
