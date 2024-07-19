@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-public class FsDaoFileReadErrorTest {
+public class DaoFileWriteErrorTest {
 
     @Test
     public void shouldConstructWithMessageForFileAndType() {
@@ -16,14 +16,16 @@ public class FsDaoFileReadErrorTest {
         File file = mock(File.class);
         doReturn("FILE").when(file).toString();
         Class<?> type = String.class;
+        String key = "KEY";
 
         // When
-        FsDaoFileReadError err = new FsDaoFileReadError(file, type);
+        DaoFileWriteError err = new DaoFileWriteError(file, type, key);
 
         // Then
         assertEquals(file, err.getFile());
         assertEquals(type, err.getType());
-        assertEquals("Unable to marshal file FILE into a instance of String", err.getMessage());
+        assertEquals(key, err.getKey());
+        assertEquals("Unable to serialise an instance of String with key KEY into file FILE", err.getMessage());
     }
 
     @Test
@@ -32,15 +34,17 @@ public class FsDaoFileReadErrorTest {
         File file = mock(File.class);
         doReturn("FILE").when(file).toString();
         Class<?> type = String.class;
+        String key = "KEY";
         RuntimeException cause = new RuntimeException();
 
         // When
-        FsDaoFileReadError err = new FsDaoFileReadError(file, type, cause);
+        DaoFileWriteError err = new DaoFileWriteError(file, type, key, cause);
 
         // Then
-        assertEquals("Unable to marshal file FILE into a instance of String", err.getMessage());
+        assertEquals("Unable to serialise an instance of String with key KEY into file FILE", err.getMessage());
         assertEquals(file, err.getFile());
         assertEquals(type, err.getType());
+        assertEquals(key, err.getKey());
         assertEquals(cause, err.getCause());
     }
 }

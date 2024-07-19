@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.io.File;
 import java.text.MessageFormat;
 
-public class FsDaoFileWriteError extends GenericDaoError {
+public class DaoFileWriteError extends GenericDaoError {
 
     @Getter
     private final File file;
@@ -14,14 +14,14 @@ public class FsDaoFileWriteError extends GenericDaoError {
     @Getter
     private final String key;
 
-    public FsDaoFileWriteError(File file, Class<?> type, String key) {
+    public DaoFileWriteError(File file, Class<?> type, String key) {
         super(message(file, type, key));
         this.file = file;
         this.type = type;
         this.key = key;
     }
 
-    public FsDaoFileWriteError(File file, Class<?> type, String key, Throwable cause) {
+    public DaoFileWriteError(File file, Class<?> type, String key, Throwable cause) {
         super(message(file, type, key), cause);
         this.file = file;
         this.type = type;

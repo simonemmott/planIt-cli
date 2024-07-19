@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CachingFsDaoTest {
+public class CachingDirectoryDaoTest {
     private class APojo {
         @Getter
         @Setter
@@ -43,7 +43,7 @@ public class CachingFsDaoTest {
     @Mock
     ObjectMapper mapper;
 
-    CachingFsDao<APojo> sut;
+    CachingDirectoryDao<APojo> sut;
 
     @Test
     public void shouldLoadOnConstruct() throws IOException, NotExistsException {
@@ -58,7 +58,7 @@ public class CachingFsDaoTest {
             }).thenReturn(paths.entries.stream());
 
             // When
-            sut = new CachingFsDao<>(
+            sut = new CachingDirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -86,7 +86,7 @@ public class CachingFsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new CachingFsDao<>(
+            sut = new CachingDirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -111,7 +111,7 @@ public class CachingFsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new CachingFsDao<>(
+            sut = new CachingDirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -143,7 +143,7 @@ public class CachingFsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new CachingFsDao<>(
+            sut = new CachingDirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -176,7 +176,7 @@ public class CachingFsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new CachingFsDao<>(
+            sut = new CachingDirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -184,7 +184,7 @@ public class CachingFsDaoTest {
                     dir,
                     mapper);
 
-            CachingFsDao<APojo> spy = spy(sut);
+            CachingDirectoryDao<APojo> spy = spy(sut);
             doReturn(b).when(spy).newFile(dir, "BBB.json");
 
             // When
@@ -211,7 +211,7 @@ public class CachingFsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new CachingFsDao<>(
+            sut = new CachingDirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -241,7 +241,7 @@ public class CachingFsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new CachingFsDao<>(
+            sut = new CachingDirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},

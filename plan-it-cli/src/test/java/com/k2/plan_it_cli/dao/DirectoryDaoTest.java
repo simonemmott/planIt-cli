@@ -3,7 +3,6 @@ package com.k2.plan_it_cli.dao;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -19,14 +18,13 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-public class FsDaoTest {
+public class DirectoryDaoTest {
 
     private class APojo {
         @Getter
@@ -48,7 +46,7 @@ public class FsDaoTest {
     @Mock
     ObjectMapper mapper;
 
-    FsDao<APojo> sut;
+    DirectoryDao<APojo> sut;
 
     @Test
     public void shouldLoadOnConstruct() {
@@ -61,7 +59,7 @@ public class FsDaoTest {
             }).thenReturn(paths.entries.stream());
 
             // When
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -87,7 +85,7 @@ public class FsDaoTest {
             }).thenReturn(paths.entries.stream());
 
             // When
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -111,7 +109,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (entity, key) -> {entity.setKey(key); return entity;},
@@ -136,7 +134,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -166,7 +164,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -196,7 +194,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -226,7 +224,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -253,7 +251,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -287,7 +285,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -314,7 +312,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -339,14 +337,14 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
                     keyGenerator,
                     dir,
                     mapper);
-            FsDao<APojo> spy = spy(sut);
+            DirectoryDao<APojo> spy = spy(sut);
             File bbbFile = mock(File.class);
             doReturn(bbbFile).when(spy).newFile(dir, "BBB.json");
 
@@ -371,7 +369,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -379,7 +377,7 @@ public class FsDaoTest {
                     dir,
                     mapper);
             doReturn("BBB").when(keyGenerator).get();
-            FsDao<APojo> spy = spy(sut);
+            DirectoryDao<APojo> spy = spy(sut);
             File bbbFile = mock(File.class);
             doReturn(bbbFile).when(spy).newFile(dir, "BBB.json");
 
@@ -405,7 +403,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -430,7 +428,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<APojo>(
+            sut = new DirectoryDao<APojo>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -455,14 +453,14 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<APojo>(
+            sut = new DirectoryDao<APojo>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
                     keyGenerator,
                     dir,
                     mapper);
-            FsDao<APojo> spy = spy(sut);
+            DirectoryDao<APojo> spy = spy(sut);
 
             APojo entity = new APojo("AAA", "NAME");
 
@@ -485,7 +483,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<>(
+            sut = new DirectoryDao<>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},
@@ -510,7 +508,7 @@ public class FsDaoTest {
                 Files.list(paths.path);
             }).thenReturn(paths.entries.stream());
 
-            sut = new FsDao<APojo>(
+            sut = new DirectoryDao<APojo>(
                     APojo.class,
                     APojo::getKey,
                     (obj, key) -> {obj.setKey(key); return obj;},

@@ -9,10 +9,10 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class CachingFsDao<T> extends FsDao<T>{
+public class CachingDirectoryDao<T> extends DirectoryDao<T> {
     private Map<String, T> cache;
 
-    public CachingFsDao(
+    public CachingDirectoryDao(
             Class<T> type,
             KeyGetter<T> keyGetter,
             KeySetter<T> keySetter,

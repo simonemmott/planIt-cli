@@ -5,20 +5,20 @@ import lombok.Getter;
 import java.io.File;
 import java.text.MessageFormat;
 
-public class FsDaoFileReadError extends GenericDaoError {
+public class DaoFileReadError extends GenericDaoError {
 
     @Getter
     private final File file;
     @Getter
     private final Class<?> type;
 
-    public FsDaoFileReadError(File file, Class<?> type) {
+    public DaoFileReadError(File file, Class<?> type) {
         super(message(file, type));
         this.file = file;
         this.type = type;
     }
 
-    public FsDaoFileReadError(File file, Class<?> type, Throwable cause) {
+    public DaoFileReadError(File file, Class<?> type, Throwable cause) {
         super(message(file, type), cause);
         this.file = file;
         this.type = type;

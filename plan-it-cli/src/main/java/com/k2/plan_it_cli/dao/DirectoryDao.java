@@ -8,12 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class FsDao<T> implements GenericDao<T>{
+public class DirectoryDao<T> implements GenericDao<T>{
     protected final Class<T> type;
     protected final KeyGetter<T> keyGetter;
     protected final KeySetter<T> keySetter;
@@ -23,7 +22,7 @@ public class FsDao<T> implements GenericDao<T>{
     private Map<String, File> index = new HashMap<>();
     private final List<Runnable> postIndexCallbacks = new ArrayList<>();
 
-    public FsDao(
+    public DirectoryDao(
             Class<T> type,
             KeyGetter<T> keyGetter,
             KeySetter<T> keySetter,
@@ -65,7 +64,7 @@ public class FsDao<T> implements GenericDao<T>{
         try {
             return mapper.readValue(file, type);
         } catch (IOException e) {
-            throw new FsDaoFileReadError(file, type, e);
+            throw new DaoFileReadError(file, type, e);
         }
     }
 
@@ -88,7 +87,7 @@ public class FsDao<T> implements GenericDao<T>{
                     try {
                         return mapper.readValue(file, type);
                     } catch (IOException e) {
-                        throw new FsDaoFileReadError(file, type, e);
+                        throw new DaoFileReadError(file, type, e);
                     }
                 });
     }
@@ -100,7 +99,7 @@ public class FsDao<T> implements GenericDao<T>{
                     try {
                         return mapper.readValue(file, type);
                     } catch (IOException e) {
-                        throw new FsDaoFileReadError(file, type, e);
+                        throw new DaoFileReadError(file, type, e);
                     }
                 })
                 .filter(prediacte);
@@ -122,7 +121,7 @@ public class FsDao<T> implements GenericDao<T>{
             mapper.writeValue(file, entity);
             index.put(key, file);
         } catch (Throwable e) {
-            throw new FsDaoFileWriteError(file, type, key, e);
+            throw new DaoFileWriteError(file, type, key, e);
         }
         return entity;
     }
@@ -141,7 +140,7 @@ public class FsDao<T> implements GenericDao<T>{
         try {
             mapper.writeValue(file, entity);
         } catch (Throwable e) {
-            throw new FsDaoFileWriteError(file, type, key, e);
+            throw new DaoFileWriteError(file, type, key, e);
         }
         return entity;
     }
@@ -154,7 +153,7 @@ public class FsDao<T> implements GenericDao<T>{
             Files.delete(file.toPath());
             index.remove(key);
         } catch (IOException e) {
-            throw new FsDaoFileWriteError(file, type, key, e);
+            throw new DaoFileWriteError(file, type, key, e);
         }
         return deleted;
     }
