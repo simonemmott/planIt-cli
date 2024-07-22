@@ -59,8 +59,45 @@ public class IndexedDaoTest {
 
     @BeforeEach
     public void setup() {
-        doReturn(Stream.of(aPojo1, aPojo2, aPojo3)).when(dao).stream();
-        sut = new IndexedDao<>(dao, uniqueNameIndex, rangeNameIndex);
+        //doReturn(Stream.of(aPojo1, aPojo2, aPojo3)).when(dao).stream();
+        sut = new IndexedDao<>(aPojoIndexationHandler -> {
+            aPojoIndexationHandler.start();
+            aPojoIndexationHandler.accept(new IndexedEntityCallback<APojo>() {
+                @Override
+                public String getKey() {
+                    return "1";
+                }
+
+                @Override
+                public APojo getEntity() {
+                    return aPojo1;
+                }
+            });
+            aPojoIndexationHandler.accept(new IndexedEntityCallback<APojo>() {
+                @Override
+                public String getKey() {
+                    return "2";
+                }
+
+                @Override
+                public APojo getEntity() {
+                    return aPojo2;
+                }
+            });
+            aPojoIndexationHandler.accept(new IndexedEntityCallback<APojo>() {
+                @Override
+                public String getKey() {
+                    return "3";
+                }
+
+                @Override
+                public APojo getEntity() {
+                    return aPojo3;
+                }
+            });
+            aPojoIndexationHandler.end();
+            return dao;
+        }, uniqueNameIndex, rangeNameIndex);
     }
 
     @Test

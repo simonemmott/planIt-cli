@@ -5,26 +5,67 @@ import com.k2.plan_it_cli.dao.predicate.IndexGetterEquals;
 
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class IndexedDao<T> implements GenericDao<T> {
     private final GenericDao<T> dao;
     private final List<GenericIndex<T>> indexes = new ArrayList<>();
-    private final Map<GenericIndex<T>,Map<Object, T>> uniqueIndexes = new HashMap<>();
-    private final Map<GenericIndex<T>,Map<Object, List<T>>> rangeIndexes = new HashMap<>();
+    private Map<GenericIndex<T>,Map<Object, T>> uniqueIndexes = new HashMap<>();
+    private Map<GenericIndex<T>,Map<Object, List<T>>> rangeIndexes = new HashMap<>();
 
-    public IndexedDao(GenericDao<T> dao, GenericIndex<T> ... indexes) {
-        this.dao = dao;
+    public IndexedDao(Function<IndexationHandler<T>,GenericDao<T>> daoSupplier, GenericIndex<T> ... indexes) {
         Collections.addAll(this.indexes, indexes);
-        this.indexes.stream().forEach(index -> {
-            if (index.isUnique()) {
-                uniqueIndexes.put(index, new HashMap<>());
-            } else {
-                rangeIndexes.put(index, new HashMap<>());
-            }
-        });
-        this.dao.stream().forEach(this::addToIndexes);
+        this.dao = daoSupplier.apply(new ThisIndexationHandler<>(this));
+    }
+
+    private static class ThisIndexationHandler<T> implements IndexationHandler<T> {
+        private final IndexedDao<T> indexedDao;
+
+        private Map<GenericIndex<T>,Map<Object, T>> thisUniqueIndexes = new HashMap<>();
+        private Map<GenericIndex<T>,Map<Object, List<T>>> thisRangeIndexes = new HashMap<>();
+
+        private ThisIndexationHandler(IndexedDao<T> indexedDao) {
+            this.indexedDao = indexedDao;
+        }
+
+        @Override
+        public void start() {
+            thisUniqueIndexes = new HashMap<>();
+            thisRangeIndexes = new HashMap<>();
+            indexedDao.indexes.forEach(index -> {
+                if (index.isUnique()) {
+                    thisUniqueIndexes.put(index, new HashMap<>());
+                } else {
+                    thisRangeIndexes.put(index, new HashMap<>());
+                }
+            });
+        }
+
+        @Override
+        public void accept(IndexedEntityCallback<T> indexedEntityCallback) {
+            addToIndexes(indexedEntityCallback.getEntity());
+        }
+
+        @Override
+        public void end() {
+            indexedDao.uniqueIndexes = thisUniqueIndexes;
+            indexedDao.rangeIndexes = thisRangeIndexes;
+        }
+
+        private void addToIndexes(T entity) {
+            indexedDao.indexes
+                    .forEach(index -> {
+                        Object indexKey = index.indexGetter().getGetter().get(entity);
+                        if (index.isUnique()) {
+                            thisUniqueIndexes.get(index).put(indexKey, entity);
+                        } else {
+                            thisRangeIndexes.get(index).computeIfAbsent(indexKey, k -> new ArrayList<>());
+                            thisRangeIndexes.get(index).get(indexKey).add(entity);
+                        }
+                    });
+        }
     }
 
     @Override

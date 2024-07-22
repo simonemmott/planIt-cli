@@ -21,6 +21,7 @@ public class DirectoryDao<T> implements GenericDao<T>{
     private final ObjectMapper mapper;
     private Map<String, File> index = new HashMap<>();
     private final List<Runnable> postIndexCallbacks = new ArrayList<>();
+    private final IndexationHandler<T> indexationHandler;
 
     public DirectoryDao(
             Class<T> type,
@@ -30,12 +31,25 @@ public class DirectoryDao<T> implements GenericDao<T>{
             File dir,
             ObjectMapper mapper,
             Runnable ... postIndexCallbacks) {
+        this(type, keyGetter, keySetter, keyGenerator, dir, mapper, null, postIndexCallbacks);
+    }
+
+    public DirectoryDao(
+            Class<T> type,
+            KeyGetter<T> keyGetter,
+            KeySetter<T> keySetter,
+            Supplier<String> keyGenerator,
+            File dir,
+            ObjectMapper mapper,
+            IndexationHandler<T> indexationHandler,
+            Runnable ... postIndexCallbacks) {
         this.type = type;
         this.keyGetter = keyGetter;
         this.keySetter = keySetter;
         this.keyGenerator = keyGenerator;
         this.dir = dir;
         this.mapper = mapper;
+        this.indexationHandler = indexationHandler;
         Collections.addAll(this.postIndexCallbacks, postIndexCallbacks);
         index();
     }
@@ -167,7 +181,28 @@ public class DirectoryDao<T> implements GenericDao<T>{
         return new File(dir, name);
     }
 
+    private IndexedEntityCallback<T> indexedEntityCallback(String key, File file) {
+        return new IndexedEntityCallback<T>() {
+            @Override
+            public String getKey() {
+                return key;
+            }
+
+            @Override
+            public T getEntity() {
+                try {
+                    return mapper.readValue(file, type);
+                } catch (IOException e) {
+                    throw new DaoFileReadError(file, type);
+                }
+            }
+        };
+    }
+
     protected void index() {
+        if (indexationHandler != null) {
+            indexationHandler.start();
+        }
         Map<String, File> index = new HashMap<>();
         try (Stream<Path> entries = Files.list(dir.toPath())) {
             entries.forEach(path -> {
@@ -175,11 +210,17 @@ public class DirectoryDao<T> implements GenericDao<T>{
                 if (path.endsWith(".json")) {
                     String key = file.getName().replaceFirst("[.][^.]+$", "");
                     index.put(key, file);
+                    if (indexationHandler != null) {
+                        indexationHandler.accept(indexedEntityCallback(key, file));
+                    }
                 }
             });
             this.index = index;
         } catch (IOException err) {
             throw new GenericDaoError(MessageFormat.format("Unable to load {0}s from {1}", type, dir), err);
+        }
+        if (indexationHandler != null) {
+            indexationHandler.end();
         }
         postIndexCallbacks.stream()
                 .forEach(postIndexCallback -> postIndexCallback.run());
