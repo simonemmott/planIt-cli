@@ -14,5 +14,4 @@ public interface GenericDao<T> {
     T insert(T entity) throws AlreadyExistsException;
     T update(T entity) throws NotExistsException, DataIntegrityViolationException;
     T delete(String key) throws NotExistsException;
-    void registerPostIndexCallback(Runnable postIndexCallback);
 }

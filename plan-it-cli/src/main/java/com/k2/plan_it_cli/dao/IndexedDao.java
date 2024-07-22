@@ -161,11 +161,6 @@ public class IndexedDao<T> implements GenericDao<T> {
         return deleted;
     }
 
-    @Override
-    public void registerPostIndexCallback(Runnable postIndexCallback) {
-        dao.registerPostIndexCallback(postIndexCallback);
-    }
-
     private void removeFromIndexes(String key, T entity) {
         indexes.stream()
                 .forEach(index -> {

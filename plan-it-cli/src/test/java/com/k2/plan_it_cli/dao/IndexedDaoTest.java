@@ -259,16 +259,4 @@ public class IndexedDaoTest {
         // Then
         assertThrows(NotExistsException.class, () -> sut.get(Predicates.equals(nameIndexGetter, "bbb")));
     }
-
-    @Test
-    public void shouldRegisterPostIndexCallback() {
-        // Given
-        Runnable runnable = mock(Runnable.class);
-
-        // When
-        sut.registerPostIndexCallback(runnable);
-
-        // Then
-        verify(dao).registerPostIndexCallback(runnable);
-    }
 }

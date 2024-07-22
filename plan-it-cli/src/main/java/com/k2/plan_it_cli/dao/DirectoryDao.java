@@ -172,11 +172,6 @@ public class DirectoryDao<T> implements GenericDao<T>{
         return deleted;
     }
 
-    @Override
-    public void registerPostIndexCallback(Runnable postIndexCallback) {
-        postIndexCallbacks.add(postIndexCallback);
-    }
-
     File newFile(File dir, String name) {
         return new File(dir, name);
     }
