@@ -20,7 +20,6 @@ public class DirectoryDao<T> implements GenericDao<T>{
     private final File dir;
     private final ObjectMapper mapper;
     private Map<String, File> index = new HashMap<>();
-    private final List<Runnable> postIndexCallbacks = new ArrayList<>();
     private final IndexationHandler<T> indexationHandler;
 
     public DirectoryDao(
@@ -29,9 +28,8 @@ public class DirectoryDao<T> implements GenericDao<T>{
             KeySetter<T> keySetter,
             Supplier<String> keyGenerator,
             File dir,
-            ObjectMapper mapper,
-            Runnable ... postIndexCallbacks) {
-        this(type, keyGetter, keySetter, keyGenerator, dir, mapper, null, postIndexCallbacks);
+            ObjectMapper mapper) {
+        this(type, keyGetter, keySetter, keyGenerator, dir, mapper, null);
     }
 
     public DirectoryDao(
@@ -41,8 +39,7 @@ public class DirectoryDao<T> implements GenericDao<T>{
             Supplier<String> keyGenerator,
             File dir,
             ObjectMapper mapper,
-            IndexationHandler<T> indexationHandler,
-            Runnable ... postIndexCallbacks) {
+            IndexationHandler<T> indexationHandler) {
         this.type = type;
         this.keyGetter = keyGetter;
         this.keySetter = keySetter;
@@ -50,7 +47,6 @@ public class DirectoryDao<T> implements GenericDao<T>{
         this.dir = dir;
         this.mapper = mapper;
         this.indexationHandler = indexationHandler;
-        Collections.addAll(this.postIndexCallbacks, postIndexCallbacks);
         index();
     }
 
@@ -217,7 +213,5 @@ public class DirectoryDao<T> implements GenericDao<T>{
         if (indexationHandler != null) {
             indexationHandler.end();
         }
-        postIndexCallbacks.stream()
-                .forEach(postIndexCallback -> postIndexCallback.run());
     }
 }

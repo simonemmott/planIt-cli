@@ -74,32 +74,6 @@ public class DirectoryDaoTest {
     }
 
     @Test
-    public void shouldCallbackPostIndex() {
-        // Given
-        Paths paths = mockPaths(dir, "AAA.json", "BBB.xml");
-        Runnable postIndexCallback = mock(Runnable.class);
-
-        try(MockedStatic<Files> filesMockedStatic = mockStatic(Files.class)) {
-            filesMockedStatic.when(() -> {
-                Files.list(paths.path);
-            }).thenReturn(paths.entries.stream());
-
-            // When
-            sut = new DirectoryDao<>(
-                    APojo.class,
-                    APojo::getKey,
-                    (entity, key) -> {entity.setKey(key); return entity;},
-                    keyGenerator,
-                    dir,
-                    mapper,
-                    postIndexCallback);
-
-            // Then
-            verify(postIndexCallback).run();
-        }
-    }
-
-    @Test
     public void shouldThrowNotExistsExceptionWhenKeyDoesNotExistOnGet() {
         // Given
         Paths paths = mockPaths(dir, "AAA.json", "BBB.xml");
